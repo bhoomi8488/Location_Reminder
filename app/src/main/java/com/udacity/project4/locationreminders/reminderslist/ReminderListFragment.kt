@@ -62,6 +62,7 @@ class ReminderListFragment : BaseFragment() {
         binding.addReminderFAB.setOnClickListener {
             navigateToAddReminder()
         }
+        checkPermissions()
     }
 
     override fun onResume() {
