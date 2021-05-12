@@ -25,6 +25,67 @@ import org.junit.Test
 @SmallTest
 class RemindersDaoTest {
 
-//    TODO: Add testing implementation to the RemindersDao.kt
+    private lateinit var database: RemindersDatabase
+
+    // Executes each task synchronously using Architecture Components.
+    @get:Rule
+    var instantExecutorRule = InstantTaskExecutorRule()
+
+    @Before
+    fun initDb() {
+        // using an in-memory database because the information stored here disappears when the
+        // process is killed
+        database = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            RemindersDatabase::class.java
+        ).build()
+    }
+
+    @After
+    fun closeDb() = database.close()
+
+    @Test
+    fun saveReminder() = runBlockingTest {
+        database.reminderDao().saveReminder(ReminderDTO("Test Title","Test Description","Test Loction", 0.0,0.0))
+
+        var checkInsertStatus = database.reminderDao().getReminders()
+
+        assertThat(checkInsertStatus.isNotEmpty(), `is`(true))
+
+    }
+
+    @Test
+    fun deleteAllReminders() = runBlockingTest {
+
+        database.reminderDao().saveReminder(ReminderDTO("Test Title","Test Description","Test Loction", 0.0,0.0))
+
+        database.reminderDao().deleteAllReminders()
+
+        var isEmptyDB = database.reminderDao().getReminders()
+
+        assertThat(isEmptyDB.isEmpty(), `is`(true))
+
+
+    }
+
+    @Test
+    fun getReminderById() = runBlockingTest {
+
+        var addNewReminder = ReminderDTO("Test Title","Test Description","Test Loction", 0.0,0.0)
+
+        database.reminderDao().saveReminder(addNewReminder)
+
+        var getReminderStatus = database.reminderDao().getReminderById(addNewReminder.id)
+
+        assertThat(getReminderStatus as ReminderDTO, notNullValue())
+        assertThat(getReminderStatus.id, `is`(addNewReminder.id))
+        assertThat(getReminderStatus.title, `is`(addNewReminder.title))
+        assertThat(getReminderStatus.description, `is`(addNewReminder.description))
+        assertThat(getReminderStatus.location, `is`(addNewReminder.location))
+        assertThat(getReminderStatus.latitude, `is`(addNewReminder.latitude))
+        assertThat(getReminderStatus.longitude, `is`(addNewReminder.longitude))
+
+
+    }
 
 }
