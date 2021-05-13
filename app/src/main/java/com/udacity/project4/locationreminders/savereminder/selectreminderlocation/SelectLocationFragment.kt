@@ -32,6 +32,7 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import java.util.*
 
 class SelectLocationFragment : BaseFragment() {
 
@@ -51,6 +52,7 @@ class SelectLocationFragment : BaseFragment() {
             map = it
             setMapStyle(map)
             setPOIClick(map)
+            setMapClick(map)
             if (foregroundAndBackgroundLocationPermissionApproved()) {
                 getDeviceLocation()
             } else {
@@ -58,6 +60,39 @@ class SelectLocationFragment : BaseFragment() {
             }
         }
 
+    }
+
+    private fun setMapClick(map: GoogleMap) {
+        map.setOnMapClickListener { latLng ->
+
+            // A Snippet is Additional text that's displayed below the title.
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat: %1$.5f, Long: %2$.5f",
+                latLng.latitude,
+                latLng.longitude
+            )
+            binding.btnSelect.setOnClickListener {
+                _viewModel.latitude.value = latLng.latitude
+                _viewModel.longitude.value = latLng.longitude
+                _viewModel.reminderSelectedLocationStr.value = getString(R.string.dropped_pin)
+                _viewModel.navigationCommand.value = NavigationCommand.Back
+            }
+            map.clear()
+            map.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    latLng,
+                    Companion.DEFAULT_ZOOM.toFloat()
+                )
+            );
+            map.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .title(getString(R.string.dropped_pin))
+                    .snippet(snippet)
+
+            )
+        }
     }
 
     override fun onCreateView(
@@ -266,7 +301,6 @@ class SelectLocationFragment : BaseFragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
         R.id.normal_map -> {
             map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true
