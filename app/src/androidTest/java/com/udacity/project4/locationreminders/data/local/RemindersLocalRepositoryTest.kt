@@ -34,7 +34,7 @@ class RemindersLocalRepositoryTest {
     var instantExecutorRule = InstantTaskExecutorRule()
 
     @Before
-    fun init(){
+    fun init() {
         database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             RemindersDatabase::class.java
@@ -54,11 +54,12 @@ class RemindersLocalRepositoryTest {
         database.close()
     }
 
-    fun saveReminder_And_Then_GetReminder_By_Id() = runBlocking{
-        val newReminder = ReminderDTO("Test Title","Test Description", "Test Location",0.0,0.0)
+    fun saveReminder_And_Then_GetReminder_By_Id() = runBlocking {
+        val newReminder = ReminderDTO("Test Title", "Test Description", "Test Location", 0.0, 0.0)
         localRepository.saveReminder(newReminder)
 
-        val retriveReminder = localRepository.getReminder(newReminder.id) as Result.Success<ReminderDTO>
+        val retriveReminder =
+            localRepository.getReminder(newReminder.id) as Result.Success<ReminderDTO>
 
         val reminderData = retriveReminder.data
 
@@ -73,9 +74,9 @@ class RemindersLocalRepositoryTest {
     }
 
     @Test
-    fun deleteAllReminder() = runBlocking{
+    fun deleteAllReminder() = runBlocking {
 
-        val newReminder = ReminderDTO("Test Title","Test Description", "Test Location",0.0,0.0)
+        val newReminder = ReminderDTO("Test Title", "Test Description", "Test Location", 0.0, 0.0)
 
         localRepository.saveReminder(newReminder)
 
@@ -89,7 +90,7 @@ class RemindersLocalRepositoryTest {
 
     @Test
     fun getReminder_Error_By_Id() = runBlocking {
-        val newReminder = ReminderDTO("Test Title","Test Description", "Test Location",0.0,0.0)
+        val newReminder = ReminderDTO("Test Title", "Test Description", "Test Location", 0.0, 0.0)
 
         localRepository.saveReminder(newReminder)
 
@@ -103,8 +104,8 @@ class RemindersLocalRepositoryTest {
     @Test
     fun getAllReminders() = runBlocking {
 
-        val reminder1 = ReminderDTO("Test Title","Test Description", "Test Location",0.0,0.0)
-        val reminder2 = ReminderDTO("Test Title","Test Description", "Test Location",0.0,0.0)
+        val reminder1 = ReminderDTO("Test Title", "Test Description", "Test Location", 0.0, 0.0)
+        val reminder2 = ReminderDTO("Test Title", "Test Description", "Test Location", 0.0, 0.0)
 
         localRepository.saveReminder(reminder1)
         localRepository.saveReminder(reminder2)

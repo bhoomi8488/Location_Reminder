@@ -91,7 +91,7 @@ class ReminderListFragmentTest {
     }
 
     @Test
-    fun navigate_to_new_reminder_screen_on_fab_click(){
+    fun navigate_to_new_reminder_screen_on_fab_click() {
         val scenario =
             launchFragmentInContainer<ReminderListFragment>(Bundle.EMPTY, R.style.AppTheme)
         val navController = Mockito.mock(NavController::class.java)
@@ -105,7 +105,7 @@ class ReminderListFragmentTest {
     }
 
     @Test
-    fun display_save_reminder_on_screen(){
+    fun display_save_reminder_on_screen() {
         val scenario =
             launchFragmentInContainer<ReminderListFragment>(Bundle.EMPTY, R.style.AppTheme)
         val navController = Mockito.mock(NavController::class.java)

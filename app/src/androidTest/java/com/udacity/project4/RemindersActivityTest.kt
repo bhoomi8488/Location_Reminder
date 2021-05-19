@@ -90,7 +90,7 @@ class RemindersActivityTest :
     }
 
     @Test
-    fun reminder_Location_Activity(){
+    fun reminder_Location_Activity() {
 
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)

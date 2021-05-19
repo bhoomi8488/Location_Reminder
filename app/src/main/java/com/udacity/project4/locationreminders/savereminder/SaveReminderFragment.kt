@@ -91,7 +91,8 @@ class SaveReminderFragment : BaseFragment() {
     private fun addGeofence(saveReminder: ReminderDataItem) {
         val geofence = Geofence.Builder()
             .setRequestId(saveReminder.id)
-            .setCircularRegion(saveReminder.latitude!!,
+            .setCircularRegion(
+                saveReminder.latitude!!,
                 saveReminder.longitude!!,
                 GEOFENCE_RADIUS_IN_METERS
             )

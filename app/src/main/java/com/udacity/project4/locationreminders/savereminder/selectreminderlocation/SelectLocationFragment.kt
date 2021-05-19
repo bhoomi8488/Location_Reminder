@@ -322,7 +322,7 @@ class SelectLocationFragment : BaseFragment() {
 
     companion object {
         private val TAG = SelectLocationFragment::class.java.simpleName
-        private const val DEFAULT_ZOOM = 20
+        private const val DEFAULT_ZOOM = 15
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
         private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
         private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29

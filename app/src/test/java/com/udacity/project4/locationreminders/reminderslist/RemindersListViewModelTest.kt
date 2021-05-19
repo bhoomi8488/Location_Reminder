@@ -11,10 +11,8 @@ import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.getOrAwaitValue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.notNullValue
-import org.hamcrest.MatcherAssert
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Before
@@ -54,7 +52,15 @@ class RemindersListViewModelTest {
 
     @Test
     fun loadReminders_showloading_value() = mainCoroutineRule.runBlockingTest {
-        dataSource.saveReminder(ReminderDTO("Title Test", "Description Test", "Location Test", 0.0, 0.0))
+        dataSource.saveReminder(
+            ReminderDTO(
+                "Title Test",
+                "Description Test",
+                "Location Test",
+                0.0,
+                0.0
+            )
+        )
 
         mainCoroutineRule.pauseDispatcher()
         viewModel.loadReminders()
@@ -76,15 +82,13 @@ class RemindersListViewModelTest {
     }
 
     @Test
-    fun loadReminders_Show_Empty_List()= mainCoroutineRule.runBlockingTest {
+    fun loadReminders_Show_Empty_List() = mainCoroutineRule.runBlockingTest {
         dataSource.deleteAllReminders()
 
         viewModel.loadReminders()
 
-        assertThat(viewModel.showNoData.getOrAwaitValue (), `is`(true))
+        assertThat(viewModel.showNoData.getOrAwaitValue(), `is`(true))
     }
-
-
 
 
 }

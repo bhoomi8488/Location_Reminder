@@ -11,17 +11,16 @@ import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.getOrAwaitValue
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
-import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
-
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.hamcrest.CoreMatchers
-import org.hamcrest.MatcherAssert
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.nullValue
-import org.junit.*
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 import org.robolectric.annotation.Config
@@ -59,15 +58,22 @@ class SaveReminderViewModelTest {
 
         mainCoroutineRule.pauseDispatcher()
 
-        viewModel.saveReminder(ReminderDataItem("Test Reminder","Test Discription", "GooglrPlex",37.42224449209498,
-            -122.08403605065007))
+        viewModel.saveReminder(
+            ReminderDataItem(
+                "Test Reminder", "Test Discription", "GooglrPlex", 37.42224449209498,
+                -122.08403605065007
+            )
+        )
 
-            assertThat(viewModel.showLoading.getOrAwaitValue(), `is`(true))
+        assertThat(viewModel.showLoading.getOrAwaitValue(), `is`(true))
 
         mainCoroutineRule.resumeDispatcher()
 
-        assertThat(viewModel.showLoading.getOrAwaitValue(), `is` (false))
-        assertEquals(viewModel.showToast.getOrAwaitValue(), context.getString(R.string.reminder_saved))
+        assertThat(viewModel.showLoading.getOrAwaitValue(), `is`(false))
+        assertEquals(
+            viewModel.showToast.getOrAwaitValue(),
+            context.getString(R.string.reminder_saved)
+        )
         assertEquals(viewModel.navigationCommand.getOrAwaitValue(), NavigationCommand.Back)
 
     }
@@ -85,15 +91,31 @@ class SaveReminderViewModelTest {
     }
 
     @Test
-    fun validateEnteredData_Check_Null_or_Not(){
+    fun validateEnteredData_Check_Null_or_Not() {
 
         dataSource.setReturnValue(true)
 
-        viewModel.validateAndSaveReminder(ReminderDataItem(null,"Test Description", "Test Location", 56.326,48.52))
-        assertEquals(viewModel.showSnackBarInt.getOrAwaitValue (), R.string.err_enter_title)
+        viewModel.validateAndSaveReminder(
+            ReminderDataItem(
+                null,
+                "Test Description",
+                "Test Location",
+                56.326,
+                48.52
+            )
+        )
+        assertEquals(viewModel.showSnackBarInt.getOrAwaitValue(), R.string.err_enter_title)
 
-        viewModel.validateAndSaveReminder(ReminderDataItem("Test Title","Test Description", null, 56.326,48.52))
-        assertEquals(viewModel.showSnackBarInt.getOrAwaitValue (), R.string.err_select_location)
+        viewModel.validateAndSaveReminder(
+            ReminderDataItem(
+                "Test Title",
+                "Test Description",
+                null,
+                56.326,
+                48.52
+            )
+        )
+        assertEquals(viewModel.showSnackBarInt.getOrAwaitValue(), R.string.err_select_location)
     }
 
 }
