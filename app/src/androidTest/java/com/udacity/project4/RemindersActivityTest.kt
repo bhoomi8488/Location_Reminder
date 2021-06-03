@@ -34,7 +34,7 @@ import org.koin.test.get
 @RunWith(AndroidJUnit4::class)
 @LargeTest
 //END TO END test to black box test the app
-class RemindersActivityTest :
+class   RemindersActivityTest :
     AutoCloseKoinTest() {// Extended Koin Test - embed autoclose @after method to close Koin after every test
 
     private lateinit var repository: ReminderDataSource
@@ -105,13 +105,13 @@ class RemindersActivityTest :
         onView(withId(R.id.map)).check(ViewAssertions.matches(isDisplayed()))
         onView(withId(R.id.map)).perform(click())
 
-        Thread.sleep(1500)
+        Thread.sleep(1000)
 
         onView(withId(R.id.btnSelect)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())
 
-        onView(withText("Test the Title")).check(ViewAssertions.matches(isDisplayed()))
-        onView(withText("Test the Discription")).check(ViewAssertions.matches(isDisplayed()))
+        onView(withText("Test Title")).check(ViewAssertions.matches(isDisplayed()))
+        onView(withText("Test Description")).check(ViewAssertions.matches(isDisplayed()))
 
         activityScenario.close()
 

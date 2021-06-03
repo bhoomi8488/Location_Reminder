@@ -5,11 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
+import com.udacity.project4.databinding.ActivityAuthenticationBinding
 import com.udacity.project4.locationreminders.RemindersActivity
 import kotlinx.android.synthetic.main.activity_authentication.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -24,8 +26,31 @@ class AuthenticationActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_authentication)
+       // setContentView(R.layout.activity_authentication)
 
+        observeAuthenticationState()
+        //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
+    }
+
+
+    private fun observeAuthenticationState() {
+        //get current user:
+        val firebaseAuth = FirebaseAuth.getInstance()
+        if (firebaseAuth.currentUser != null) {
+            // if already logged in, redirect to Reminders list screen
+            startActivity(Intent(this, RemindersActivity::class.java))
+            finish()
+        } else {
+            // only show the UI if the user really needs to sign in
+            // this is to avoid the ugly ui issue where the signin buttons
+            // appear briefly
+            val binding = DataBindingUtil.setContentView<ActivityAuthenticationBinding>(this,R.layout.activity_authentication)
+            setContentView(binding.root) // inflate layout
+            //launchSignInFlow() // set OnClickListener's
+        }
+
+        // Handle the case where the user were previously not signed in
+        // Having a livedata means that the user would be taken to the next screen automatically as soon as they are signed in
         viewModel.authenticationState.observe(this, Observer { authenticationState ->
             if (authenticationState.equals(AuthenticationViewModel.AuthenticationState.AUTHENTICATED)) {
                 val intent = Intent(this, RemindersActivity::class.java)
@@ -37,7 +62,6 @@ class AuthenticationActivity : AppCompatActivity() {
                 }
             }
         })
-        //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
     }
 
     private fun launchSignInFlow() {

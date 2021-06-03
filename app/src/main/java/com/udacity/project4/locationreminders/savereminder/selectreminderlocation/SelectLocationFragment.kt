@@ -2,13 +2,17 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
+import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
@@ -25,10 +29,12 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PointOfInterest
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
+import com.udacity.project4.locationreminders.reminderslist.ReminderListFragment
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
@@ -54,6 +60,7 @@ class SelectLocationFragment : BaseFragment() {
             setPOIClick(map)
             setMapClick(map)
             if (foregroundAndBackgroundLocationPermissionApproved()) {
+                println("get device locaton")
                 getDeviceLocation()
             } else {
                 checkPermissions()
@@ -176,6 +183,7 @@ class SelectLocationFragment : BaseFragment() {
                     Log.d(TAG, "Error geting location settings resolution: " + sendEx.message)
                 }
             } else {
+                Toast.makeText(requireContext(),"Permission denied.", Toast.LENGTH_LONG).show()
                 Snackbar.make(
                     this.requireView(),
                     R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
@@ -185,9 +193,43 @@ class SelectLocationFragment : BaseFragment() {
             }
         }
         locationSettingsResponseTask.addOnCompleteListener {
+            println("(it.isSuccessful==="+it.isSuccessful)
             if (it.isSuccessful) {
                 map.isMyLocationEnabled = true
             }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        Log.d(SelectLocationFragment.TAG, "onRequestPermissionResult")
+
+        if (
+            grantResults.isEmpty() ||
+            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
+                    PackageManager.PERMISSION_DENIED)
+        ) {
+            // Permission denied.
+            Toast.makeText(requireContext(),"Permission denied.",Toast.LENGTH_LONG).show()
+            Snackbar.make(
+                this.requireView(),
+                R.string.permission_denied_explanation, Snackbar.LENGTH_INDEFINITE
+            ).setAction(R.string.settings) {
+                // Displays App settings screen.
+                startActivity(Intent().apply {
+                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                })
+            }.show()
+        } else {
+            Log.i("PERMISSIONS", "GRANTED")
+            getDeviceLocation()
         }
     }
 
@@ -199,9 +241,11 @@ class SelectLocationFragment : BaseFragment() {
 
         try {
             if (foregroundAndBackgroundLocationPermissionApproved()) {
+                println("approve===")
                 map.setMyLocationEnabled(true)
                 val locationResult = fusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener(requireActivity()) { task ->
+
                     if (task.isSuccessful) {
                         // Set the map's camera position to the current location of the device.
                         lastKnownLocation = task.result
@@ -216,6 +260,7 @@ class SelectLocationFragment : BaseFragment() {
                             )
                         }
                     } else {
+                        println("else in get location")
                         map?.animateCamera(
                             CameraUpdateFactory
                                 .newLatLngZoom(defaultLocation, DEFAULT_ZOOM.toFloat())
@@ -258,7 +303,7 @@ class SelectLocationFragment : BaseFragment() {
             map.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                     poi.latLng,
-                    Companion.DEFAULT_ZOOM.toFloat()
+                    DEFAULT_ZOOM.toFloat()
                 )
             );
             val poiMarker = map.addMarker(
@@ -326,6 +371,8 @@ class SelectLocationFragment : BaseFragment() {
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
         private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
         private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
+        private const val LOCATION_PERMISSION_INDEX = 0
+        private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
     }
 
 }

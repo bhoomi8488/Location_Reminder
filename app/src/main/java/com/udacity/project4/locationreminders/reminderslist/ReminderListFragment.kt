@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.firebase.ui.auth.AuthUI
@@ -132,6 +133,7 @@ class ReminderListFragment : BaseFragment() {
                     PackageManager.PERMISSION_DENIED)
         ) {
             // Permission denied.
+            Toast.makeText(requireContext(),"Permission denied.",Toast.LENGTH_LONG).show()
             Snackbar.make(
                 this.requireView(),
                 R.string.permission_denied_explanation, Snackbar.LENGTH_INDEFINITE
@@ -149,6 +151,7 @@ class ReminderListFragment : BaseFragment() {
     }
 
     private fun checkPermissions() {
+        println(" click on check permisstion...")
         if (foregroundAndBackgroundLocationPermissionApproved()) {
             checkDeviceLocationSettingsAndStartGeofence()
         } else {
@@ -186,6 +189,7 @@ class ReminderListFragment : BaseFragment() {
                     Log.d(TAG, "Error geting location settings resolution: " + sendEx.message)
                 }
             } else {
+                Toast.makeText(requireContext(),"Permission denied.",Toast.LENGTH_SHORT).show()
                 Snackbar.make(
                     this.requireView(),
                     R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
