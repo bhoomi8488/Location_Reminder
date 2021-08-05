@@ -8,9 +8,11 @@ import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions
+import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import com.google.android.material.internal.ContextUtils
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
@@ -20,6 +22,7 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.Matchers
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -112,6 +115,33 @@ class   RemindersActivityTest :
 
         onView(withText("Test Title")).check(ViewAssertions.matches(isDisplayed()))
         onView(withText("Test Description")).check(ViewAssertions.matches(isDisplayed()))
+
+        activityScenario.close()
+
+    }
+
+    @Test
+    fun reminder_Location_Activity_show_toast_message() {
+
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).perform(replaceText("Test Title"))
+        onView(withId(R.id.reminderDescription)).perform(replaceText("Test Description"))
+
+        Thread.sleep(1000)
+
+        onView(withId(R.id.selectLocation)).perform(click())
+        onView(withId(R.id.map)).perform(click())
+
+        Thread.sleep(1000)
+
+        onView(withId(R.id.btnSelect)).perform(click())
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        onView(withText(R.string.reminder_saved))
+            .inRoot(RootMatchers.withDecorView(Matchers.not((ContextUtils.getActivity(appContext)?.window?.decorView)))).check(ViewAssertions.matches(isDisplayed()))
 
         activityScenario.close()
 
