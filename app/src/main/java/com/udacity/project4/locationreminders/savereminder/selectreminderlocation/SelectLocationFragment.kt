@@ -51,6 +51,8 @@ class SelectLocationFragment : BaseFragment() {
     private var lastKnownLocation: Location? = null
     private val defaultLocation = LatLng(-26.29275480332018, 28.090699663277594)
 
+
+
     //Reference Treasure Hunt App
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
@@ -61,14 +63,12 @@ class SelectLocationFragment : BaseFragment() {
             setMapStyle(map)
             setMapClick(map)
             setPoiClick(map)
-            if (foregroundAndBackgroundLocationPermissionApproved()) {
-                getDeviceLocation()
-            } else {
-                checkPermissions()
-            }
-
+            requestForegroundAndBackgroundLocationPermissions()
+            getDeviceLocation()
         }
     }
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -296,30 +296,32 @@ class SelectLocationFragment : BaseFragment() {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
         val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
-
-        val settingsClient = LocationServices.getSettingsClient(this.requireActivity())
+        val settingsClient = LocationServices.getSettingsClient(requireActivity())
         val locationSettingsResponseTask =
             settingsClient.checkLocationSettings(builder.build())
-
         locationSettingsResponseTask.addOnFailureListener { exception ->
             if (exception is ResolvableApiException && resolve) {
-                // Location settings are not satisfied, but this can be fixed
-                // by showing the user a dialog.
                 try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-                    exception.startResolutionForResult(
-                        this.requireActivity(),
-                        REQUEST_TURN_DEVICE_LOCATION_ON
+                    Log.e(TAG," exception.startResolutionForResult")
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null,
+                        0,
+                        0,
+                        0,
+                        null
                     )
                 } catch (sendEx: IntentSender.SendIntentException) {
-                    Log.d(TAG, "Error geting location settings resolution: " + sendEx.message)
+                    Log.e(TAG,"Error getting location settings resolution: ${sendEx.message}")
                 }
             } else {
+                Log.e(TAG,"Error getting location settings resolution: showing snackbar")
                 Snackbar.make(
-                    this.requireView(),
+                    binding.constraintLayout,
                     R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
                 ).setAction(android.R.string.ok) {
+                    Log.e(TAG,"setAction oK")
                     checkDeviceLocationSettingsAndStartGeofence()
                 }.show()
             }
@@ -337,22 +339,21 @@ class SelectLocationFragment : BaseFragment() {
      */
     @TargetApi(29)
     private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            this.requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ))
-        val backgroundPermissionApproved =
+        val foregroundLocationApproved =
+            (PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+            ))
+        val backgroundLocationApproved =
             if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            this.requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
+
+                PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                )
             } else {
                 true
             }
-        return foregroundLocationApproved && backgroundPermissionApproved
+        return foregroundLocationApproved && backgroundLocationApproved
     }
 
     /*
@@ -360,28 +361,26 @@ class SelectLocationFragment : BaseFragment() {
      */
     @TargetApi(29)
     private fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved())
-            return
-
-        // Else request the permission
-        // this provides the result[LOCATION_PERMISSION_INDEX]
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            checkDeviceLocationSettingsAndStartGeofence()
+        }
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-
+        Log.e(TAG,"runningQOrLater is $runningQOrLater")
         val resultCode = when {
             runningQOrLater -> {
-                // this provides the result[BACKGROUND_LOCATION_PERMISSION_INDEX]
                 permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
                 REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
             }
-            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+            else ->
+                REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
-
-        Log.d(TAG, "Request foreground only location permission")
+        Log.e(TAG,"resultCode is $resultCode")
         requestPermissions(
             permissionsArray,
             resultCode
         )
     }
+
 
     companion object {
         private val TAG = SelectLocationFragment::class.java.simpleName
