@@ -18,7 +18,6 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
-import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
@@ -59,7 +58,21 @@ class SaveReminderFragment : BaseFragment() {
 
         geofencingClient = LocationServices.getGeofencingClient(requireActivity())
         binding.saveReminder.setOnClickListener {
-            checkDeviceLocationSettingsAndStartGeofence()
+            val title = _viewModel.reminderTitle.value
+            val description = _viewModel.reminderDescription.value
+            val location = _viewModel.reminderSelectedLocationStr.value
+            val latitude = _viewModel.latitude.value
+            val longitude = _viewModel.longitude.value
+            val reminderDTO = ReminderDataItem(
+                    title = title,
+                    description = description,
+                    latitude = latitude,
+                    longitude = longitude,
+                    location = location
+                )
+            if (reminderDTO != null) {
+                addGeofenceForClue(reminderDTO)
+            }
         }
     }
 
@@ -100,23 +113,7 @@ class SaveReminderFragment : BaseFragment() {
         }
         locationSettingsResponseTask.addOnCompleteListener {
             if (it.isSuccessful) {
-                val title = _viewModel.reminderTitle.value
-                val description = _viewModel.reminderDescription.value
-                val location = _viewModel.reminderSelectedLocationStr.value
-                val latitude = _viewModel.latitude.value
-                val longitude = _viewModel.longitude.value
-                val reminderDTO = _viewModel.validateAndSaveReminder(
-                    ReminderDataItem(
-                        title = title,
-                        description = description,
-                        latitude = latitude,
-                        longitude = longitude,
-                        location = location
-                    )
-                )
-                if (reminderDTO != null) {
-                    addGeofenceForClue(reminderDTO)
-                }
+
             }
         }
     }
@@ -129,7 +126,7 @@ class SaveReminderFragment : BaseFragment() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun addGeofenceForClue(reminder: ReminderDTO) {
+    private fun addGeofenceForClue(reminder: ReminderDataItem) {
         val geofence = Geofence.Builder()
             .setRequestId(reminder.id)
             .setCircularRegion(reminder.latitude!!, reminder.longitude!!, 100f)
@@ -143,8 +140,16 @@ class SaveReminderFragment : BaseFragment() {
 
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
             addOnSuccessListener {
+                _viewModel.validateAndSaveReminder(reminder)
             }
             addOnFailureListener {
+                Snackbar.make(
+                    binding.constraintLayout,
+                    R.string.location_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    Log.e(TAG, "setAction oK")
+                    checkDeviceLocationSettingsAndStartGeofence()
+                }.show()
             }
         }
     }
