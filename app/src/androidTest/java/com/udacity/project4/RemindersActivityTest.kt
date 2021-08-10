@@ -147,4 +147,28 @@ class   RemindersActivityTest :
 
     }
 
+    @Test
+    fun reminder_Location_Activity_show_Snackbar_message() {
+
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderDescription)).perform(replaceText("Test Description"))
+
+        Thread.sleep(1000)
+
+        onView(withId(R.id.selectLocation)).perform(click())
+        onView(withId(R.id.map)).perform(click())
+
+        Thread.sleep(1000)
+
+        onView(withId(R.id.btnSelect)).perform(click())
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(ViewAssertions.matches(withText(R.string.err_enter_title)))
+        activityScenario.close()
+
+    }
 }
