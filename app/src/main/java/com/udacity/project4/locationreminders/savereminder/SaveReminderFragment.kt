@@ -3,11 +3,14 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.app.Activity
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,12 +20,14 @@ import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
+import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.SelectLocationFragment
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
@@ -32,6 +37,7 @@ class SaveReminderFragment : BaseFragment() {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSaveReminderBinding
     private lateinit var geofencingClient: GeofencingClient
+    lateinit var reminderData: ReminderDataItem
 
     //Reference Treasure Hunt App
     private val runningQOrLater =
@@ -64,7 +70,22 @@ class SaveReminderFragment : BaseFragment() {
         }
         geofencingClient = LocationServices.getGeofencingClient(requireActivity())
         binding.saveReminder.setOnClickListener {
-            requestForegroundAndBackgroundLocationPermissions()
+            val title = _viewModel.reminderTitle.value
+            val description = _viewModel.reminderDescription.value
+            val location = _viewModel.reminderSelectedLocationStr.value
+            val latitude = _viewModel.latitude.value
+            val longitude = _viewModel.longitude.value
+            reminderData = ReminderDataItem(
+                title = title,
+                description = description,
+                latitude = latitude,
+                longitude = longitude,
+                location = location
+            )
+            val reminderDTO = _viewModel.validateEnteredData(reminderData)
+            if (reminderDTO) {
+                requestForegroundAndBackgroundLocationPermissions()
+            }
         }
     }
 
@@ -104,28 +125,14 @@ class SaveReminderFragment : BaseFragment() {
         }
         locationSettingsResponseTask.addOnCompleteListener {
             if (it.isSuccessful) {
-                val title = _viewModel.reminderTitle.value
-                val description = _viewModel.reminderDescription.value
-                val location = _viewModel.reminderSelectedLocationStr.value
-                val latitude = _viewModel.latitude.value
-                val longitude = _viewModel.longitude.value
-                val reminderData = ReminderDataItem(
-                    title = title,
-                    description = description,
-                    latitude = latitude,
-                    longitude = longitude,
-                    location = location
-                )
-                val reminderDTO = _viewModel.validateEnteredData(reminderData)
-                if (reminderDTO) {
-                    addGeofenceForClue(reminderData)
-                }
+                addGeofenceForClue(reminderData)
             }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        Log.e(TAG, "onActivityResult requestCode===$requestCode")
         if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
             checkDeviceLocationSettingsAndStartGeofence(false)
         }
@@ -156,6 +163,38 @@ class SaveReminderFragment : BaseFragment() {
                     Log.e(TAG, "setAction oK")
                 }.show()
             }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        Log.d(TAG, "onRequestPermissionResult")
+        Log.d(TAG, "requestCode==$requestCode")
+        if (
+            grantResults.isEmpty() ||
+            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
+                    PackageManager.PERMISSION_DENIED)
+        ) {
+            // Permission denied.
+            Snackbar.make(
+                this.requireView(),
+                R.string.permission_denied_explanation, Snackbar.LENGTH_INDEFINITE
+            ).setAction(R.string.settings) {
+                // Displays App settings screen.
+                startActivity(Intent().apply {
+                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                })
+            }.show()
+        } else {
+            Log.d(TAG, "checkDeviceLocationSettingsAndStartGeofence")
+            checkDeviceLocationSettingsAndStartGeofence()
         }
     }
 
@@ -197,6 +236,8 @@ class SaveReminderFragment : BaseFragment() {
             } else {
                 true
             }
+        Log.e(TAG, "foregroundLocationApproved is $foregroundLocationApproved")
+        Log.e(TAG, "backgroundLocationApproved is $backgroundLocationApproved")
         return foregroundLocationApproved && backgroundLocationApproved
     }
 
@@ -208,9 +249,11 @@ class SaveReminderFragment : BaseFragment() {
 
     companion object {
         private val TAG = SaveReminderFragment::class.java.simpleName
-        private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
         private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+        private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
+        private const val LOCATION_PERMISSION_INDEX = 0
+        private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
 
     }
 }
